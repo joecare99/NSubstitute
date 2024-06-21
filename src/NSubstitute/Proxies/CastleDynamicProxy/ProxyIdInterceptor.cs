@@ -1,47 +1,39 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Reflection;
 using Castle.DynamicProxy;
 using NSubstitute.Core;
 
-namespace NSubstitute.Proxies.CastleDynamicProxy
+namespace NSubstitute.Proxies.CastleDynamicProxy;
+
+public class ProxyIdInterceptor(Type primaryProxyType) : IInterceptor
 {
-    public class ProxyIdInterceptor : IInterceptor
+    private string? _cachedProxyId;
+
+    public void Intercept(IInvocation invocation)
     {
-        private readonly Type _primaryProxyType;
-        private string? _cachedProxyId;
-
-        public ProxyIdInterceptor(Type primaryProxyType)
+        if (IsDefaultToStringMethod(invocation.Method))
         {
-            _primaryProxyType = primaryProxyType;
+            invocation.ReturnValue = _cachedProxyId ??= GenerateId(invocation);
+            return;
         }
 
-        public void Intercept(IInvocation invocation)
-        {
-            if (IsDefaultToStringMethod(invocation.Method))
-            {
-                invocation.ReturnValue = _cachedProxyId ??= GenerateId(invocation);
-                return;
-            }
+        invocation.Proceed();
+    }
 
-            invocation.Proceed();
-        }
+    private string GenerateId(IInvocation invocation)
+    {
+        var proxy = invocation.InvocationTarget;
 
-        private string GenerateId(IInvocation invocation)
-        {
-            var proxy = invocation.InvocationTarget;
+        var shortTypeName = primaryProxyType.GetNonMangledTypeName();
+        var proxyHashCode = proxy.GetHashCode();
 
-            var shortTypeName = _primaryProxyType.GetNonMangledTypeName();
-            var proxyHashCode = proxy.GetHashCode();
+        return string.Format(CultureInfo.InvariantCulture, "Substitute.{0}|{1:x8}", shortTypeName, proxyHashCode);
+    }
 
-            return string.Format(CultureInfo.InvariantCulture, "Substitute.{0}|{1:x8}", shortTypeName, proxyHashCode);
-        }
-
-        public static bool IsDefaultToStringMethod(MethodInfo methodInfo)
-        {
-            return methodInfo.DeclaringType == typeof(object)
-                   && string.Equals(methodInfo.Name, nameof(ToString), StringComparison.Ordinal)
-                   && methodInfo.GetParameters().Length == 0;
-        }
+    public static bool IsDefaultToStringMethod(MethodInfo methodInfo)
+    {
+        return methodInfo.DeclaringType == typeof(object)
+               && string.Equals(methodInfo.Name, nameof(ToString), StringComparison.Ordinal)
+               && methodInfo.GetParameters().Length == 0;
     }
 }

@@ -1,97 +1,80 @@
 using System.Collections.Concurrent;
 
-namespace NSubstitute.Core
+namespace NSubstitute.Core;
+
+public class CallResults(ICallInfoFactory callInfoFactory) : ICallResults
 {
-    public class CallResults : ICallResults
+    // There was made a decision to use ConcurrentStack instead of ConcurrentQueue here.
+    // The pros is that reverse enumeration is cheap. The cons is that stack allocates on each push.
+    // We presume that read operations will dominate, so stack suits better.
+    private readonly ConcurrentStack<ResultForCallSpec> _results = new ConcurrentStack<ResultForCallSpec>();
+
+    public void SetResult(ICallSpecification callSpecification, IReturn result)
     {
-        private readonly ICallInfoFactory _callInfoFactory;
-        // There was made a decision to use ConcurrentStack instead of ConcurrentQueue here.
-        // The pros is that reverse enumeration is cheap. The cons is that stack allocates on each push.
-        // We presume that read operations will dominate, so stack suits better.
-        private readonly ConcurrentStack<ResultForCallSpec> _results;
+        _results.Push(new ResultForCallSpec(callSpecification, result));
+    }
 
-        public CallResults(ICallInfoFactory callInfoFactory)
+    public bool TryGetResult(ICall call, out object? result)
+    {
+        result = default;
+        if (ReturnsVoidFrom(call))
         {
-            _results = new ConcurrentStack<ResultForCallSpec>();
-            _callInfoFactory = callInfoFactory;
+            return false;
         }
 
-        public void SetResult(ICallSpecification callSpecification, IReturn result)
+        if (!TryFindResultForCall(call, out var configuredResult))
         {
-            _results.Push(new ResultForCallSpec(callSpecification, result));
+            return false;
         }
 
-        public bool TryGetResult(ICall call, out object? result)
+        result = configuredResult.GetResult(call, callInfoFactory);
+        return true;
+    }
+
+    private bool TryFindResultForCall(ICall call, out ResultForCallSpec configuredResult)
+    {
+        // Optimization for performance - enumerator makes allocation.
+        if (_results.IsEmpty)
         {
-            result = default;
-            if (ReturnsVoidFrom(call))
-            {
-                return false;
-            }
-
-            if (!TryFindResultForCall(call, out var configuredResult))
-            {
-                return false;
-            }
-
-            result = configuredResult.GetResult(call, _callInfoFactory);
-            return true;
-        }
-
-        private bool TryFindResultForCall(ICall call, out ResultForCallSpec configuredResult)
-        {
-            // Optimization for performance - enumerator makes allocation.
-            if (_results.IsEmpty)
-            {
-                configuredResult = default;
-                return false;
-            }
-
-            foreach (var result in _results)
-            {
-                if (result.IsResultFor(call))
-                {
-                    configuredResult = result;
-                    return true;
-                }
-            }
-
             configuredResult = default;
             return false;
         }
 
-        public void Clear()
+        foreach (var result in _results)
         {
-            _results.Clear();
+            if (result.IsResultFor(call))
+            {
+                configuredResult = result;
+                return true;
+            }
         }
 
-        private static bool ReturnsVoidFrom(ICall call)
-        {
-            return call.GetReturnType() == typeof(void);
-        }
+        configuredResult = default;
+        return false;
+    }
 
-        private readonly struct ResultForCallSpec
-        {
-            private readonly ICallSpecification _callSpecification;
-            private readonly IReturn _resultToReturn;
+    public void Clear()
+    {
+        _results.Clear();
+    }
 
-            public ResultForCallSpec(ICallSpecification callSpecification, IReturn resultToReturn)
+    private static bool ReturnsVoidFrom(ICall call)
+    {
+        return call.GetReturnType() == typeof(void);
+    }
+
+    private readonly struct ResultForCallSpec(ICallSpecification callSpecification, IReturn resultToReturn)
+    {
+        public bool IsResultFor(ICall call) => callSpecification.IsSatisfiedBy(call);
+        public object? GetResult(ICall call, ICallInfoFactory callInfoFactory)
+        {
+            if (resultToReturn is ICallIndependentReturn callIndependentReturn)
             {
-                _callSpecification = callSpecification;
-                _resultToReturn = resultToReturn;
+                return callIndependentReturn.GetReturnValue();
             }
 
-            public bool IsResultFor(ICall call) => _callSpecification.IsSatisfiedBy(call);
-            public object? GetResult(ICall call, ICallInfoFactory callInfoFactory)
-            {
-                if (_resultToReturn is ICallIndependentReturn callIndependentReturn)
-                {
-                    return callIndependentReturn.GetReturnValue();
-                }
-
-                var callInfo = callInfoFactory.Create(call);
-                return _resultToReturn.ReturnFor(callInfo);
-            }
+            var callInfo = callInfoFactory.Create(call);
+            return resultToReturn.ReturnFor(callInfo);
         }
     }
 }

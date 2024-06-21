@@ -1,19 +1,9 @@
-﻿using System.Collections.Generic;
+﻿namespace NSubstitute.Core.Arguments;
 
-namespace NSubstitute.Core.Arguments
+public class SuppliedArgumentSpecificationsFactory(IArgumentSpecificationCompatibilityTester argumentSpecificationCompatTester) : ISuppliedArgumentSpecificationsFactory
 {
-    public class SuppliedArgumentSpecificationsFactory : ISuppliedArgumentSpecificationsFactory
+    public ISuppliedArgumentSpecifications Create(IEnumerable<IArgumentSpecification> argumentSpecifications)
     {
-        private readonly IArgumentSpecificationCompatibilityTester _argumentSpecificationCompatTester;
-
-        public SuppliedArgumentSpecificationsFactory(IArgumentSpecificationCompatibilityTester argumentSpecificationCompatTester)
-        {
-            _argumentSpecificationCompatTester = argumentSpecificationCompatTester;
-        }
-
-        public ISuppliedArgumentSpecifications Create(IEnumerable<IArgumentSpecification> argumentSpecifications)
-        {
-            return new SuppliedArgumentSpecifications(_argumentSpecificationCompatTester, argumentSpecifications);
-        }
+        return new SuppliedArgumentSpecifications(argumentSpecificationCompatTester, argumentSpecifications);
     }
 }

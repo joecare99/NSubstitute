@@ -1,20 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace NSubstitute.Core.Arguments;
 
-namespace NSubstitute.Core.Arguments
+public class DefaultChecker(IDefaultForType defaultForType) : IDefaultChecker
 {
-    public class DefaultChecker : IDefaultChecker
+    public bool IsDefault(object? value, Type forType)
     {
-        private readonly IDefaultForType _defaultForType;
-
-        public DefaultChecker(IDefaultForType defaultForType)
-        {
-            _defaultForType = defaultForType;
-        }
-
-        public bool IsDefault(object? value, Type forType)
-        {
-            return EqualityComparer<object>.Default.Equals(value, _defaultForType.GetDefaultFor(forType));
-        }
+        return EqualityComparer<object>.Default.Equals(value, defaultForType.GetDefaultFor(forType));
     }
 }

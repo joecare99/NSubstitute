@@ -1,24 +1,16 @@
 using NSubstitute.Core.Arguments;
 
-namespace NSubstitute.Core
+namespace NSubstitute.Core;
+
+public class CallSpecificationFactory(IArgumentSpecificationsFactory argumentSpecificationsFactory) : ICallSpecificationFactory
 {
-    public class CallSpecificationFactory : ICallSpecificationFactory
+    public ICallSpecification CreateFrom(ICall call, MatchArgs matchArgs)
     {
-        private readonly IArgumentSpecificationsFactory _argumentSpecificationsFactory;
-
-        public CallSpecificationFactory(IArgumentSpecificationsFactory argumentSpecificationsFactory)
-        {
-            _argumentSpecificationsFactory = argumentSpecificationsFactory;
-        }
-
-        public ICallSpecification CreateFrom(ICall call, MatchArgs matchArgs)
-        {
-            var methodInfo = call.GetMethodInfo();
-            var argumentSpecs = call.GetArgumentSpecifications();
-            var arguments = call.GetOriginalArguments();
-            var parameterInfos = call.GetParameterInfos();
-            var argumentSpecificationsForCall = _argumentSpecificationsFactory.Create(argumentSpecs, arguments, parameterInfos, methodInfo, matchArgs);
-            return new CallSpecification(methodInfo, argumentSpecificationsForCall);
-        }
+        var methodInfo = call.GetMethodInfo();
+        var argumentSpecs = call.GetArgumentSpecifications();
+        var arguments = call.GetOriginalArguments();
+        var parameterInfos = call.GetParameterInfos();
+        var argumentSpecificationsForCall = argumentSpecificationsFactory.Create(argumentSpecs, arguments, parameterInfos, methodInfo, matchArgs);
+        return new CallSpecification(methodInfo, argumentSpecificationsForCall);
     }
 }

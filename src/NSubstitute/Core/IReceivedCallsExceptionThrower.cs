@@ -1,10 +1,8 @@
-using System.Collections.Generic;
 using NSubstitute.ReceivedExtensions;
 
-namespace NSubstitute.Core
+namespace NSubstitute.Core;
+
+public interface IReceivedCallsExceptionThrower
 {
-    public interface IReceivedCallsExceptionThrower
-    {
-        void Throw(ICallSpecification callSpecification, IEnumerable<ICall> matchingCalls, IEnumerable<ICall> nonMatchingCalls, Quantity requiredQuantity);
-    }
+    void Throw(ICallSpecification callSpecification, IEnumerable<ICall> matchingCalls, IEnumerable<ICall> nonMatchingCalls, Quantity requiredQuantity);
 }

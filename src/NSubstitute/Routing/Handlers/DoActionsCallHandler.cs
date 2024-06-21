@@ -1,21 +1,13 @@
 using NSubstitute.Core;
 
-namespace NSubstitute.Routing.Handlers
+namespace NSubstitute.Routing.Handlers;
+
+public class DoActionsCallHandler(ICallActions callActions) : ICallHandler
 {
-    public class DoActionsCallHandler :ICallHandler
+    public RouteAction Handle(ICall call)
     {
-        private readonly ICallActions _callActions;
+        callActions.InvokeMatchingActions(call);
 
-        public DoActionsCallHandler(ICallActions callActions)
-        {
-            _callActions = callActions;
-        }
-
-        public RouteAction Handle(ICall call)
-        {
-            _callActions.InvokeMatchingActions(call);
-
-            return RouteAction.Continue();
-        }
+        return RouteAction.Continue();
     }
 }

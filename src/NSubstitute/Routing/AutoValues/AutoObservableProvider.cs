@@ -1,39 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using NSubstitute.Core;
 using System.Reflection;
-using NSubstitute.Core;
 
-namespace NSubstitute.Routing.AutoValues
+namespace NSubstitute.Routing.AutoValues;
+
+public class AutoObservableProvider(Lazy<IReadOnlyCollection<IAutoValueProvider>> autoValueProviders) : IAutoValueProvider
 {
-    public class AutoObservableProvider : IAutoValueProvider
+    public bool CanProvideValueFor(Type type) =>
+        type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(IObservable<>);
+
+    public object? GetValue(Type type)
     {
-        private readonly Lazy<IReadOnlyCollection<IAutoValueProvider>> _autoValueProviders;
+        if (!CanProvideValueFor(type))
+            throw new InvalidOperationException();
 
-        public AutoObservableProvider(Lazy<IReadOnlyCollection<IAutoValueProvider>> autoValueProviders)
-        {
-            _autoValueProviders = autoValueProviders;
-        }
+        Type innerType = type.GetGenericArguments()[0];
+        var valueProvider = autoValueProviders.Value.FirstOrDefault(vp => vp.CanProvideValueFor(innerType));
+        var value = valueProvider == null ? GetDefault(type) : valueProvider.GetValue(innerType);
+        return Activator.CreateInstance(typeof(ReturnObservable<>).MakeGenericType(innerType), [value]);
+    }
 
-        public bool CanProvideValueFor(Type type) =>
-            type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(IObservable<>);
-
-        public object? GetValue(Type type)
-        {
-            if (!CanProvideValueFor(type))
-                throw new InvalidOperationException();
-
-            Type innerType = type.GetGenericArguments()[0];
-            var valueProvider = _autoValueProviders.Value.FirstOrDefault(vp => vp.CanProvideValueFor(innerType));
-            var value = valueProvider == null ? GetDefault(type) : valueProvider.GetValue(innerType);
-            return Activator.CreateInstance(
-                    typeof(ReturnObservable<>).MakeGenericType(innerType)
-                    , new object?[] { value });
-        }
-
-        private static object? GetDefault(Type type)
-        {
-            return type.GetTypeInfo().IsValueType ? Activator.CreateInstance(type) : null;
-        }
+    private static object? GetDefault(Type type)
+    {
+        return type.GetTypeInfo().IsValueType ? Activator.CreateInstance(type) : null;
     }
 }

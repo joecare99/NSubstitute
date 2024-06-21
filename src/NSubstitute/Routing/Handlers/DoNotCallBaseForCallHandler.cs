@@ -1,30 +1,17 @@
-using System;
 using NSubstitute.Core;
 using NSubstitute.Exceptions;
 
-namespace NSubstitute.Routing.Handlers
+namespace NSubstitute.Routing.Handlers;
+
+public class DoNotCallBaseForCallHandler(ICallSpecificationFactory callSpecificationFactory, ICallBaseConfiguration callBaseConfig, MatchArgs matchArgs) : ICallHandler
 {
-    public class DoNotCallBaseForCallHandler : ICallHandler
+    public RouteAction Handle(ICall call)
     {
-        private readonly ICallSpecificationFactory _callSpecificationFactory;
-        private readonly ICallBaseConfiguration _callBaseConfig;
-        private readonly MatchArgs _matchArgs;
+        if (!call.CanCallBase) throw CouldNotConfigureCallBaseException.ForSingleCall();
 
-        public DoNotCallBaseForCallHandler(ICallSpecificationFactory callSpecificationFactory, ICallBaseConfiguration callBaseConfig, MatchArgs matchArgs)
-        {
-            _callSpecificationFactory = callSpecificationFactory;
-            _callBaseConfig = callBaseConfig;
-            _matchArgs = matchArgs;
-        }
+        var callSpec = callSpecificationFactory.CreateFrom(call, matchArgs);
+        callBaseConfig.Exclude(callSpec);
 
-        public RouteAction Handle(ICall call)
-        {
-            if (!call.CanCallBase) throw CouldNotConfigureCallBaseException.ForSingleCall();
-
-            var callSpec = _callSpecificationFactory.CreateFrom(call, _matchArgs);
-            _callBaseConfig.Exclude(callSpec);
-
-            return RouteAction.Continue();
-        }
+        return RouteAction.Continue();
     }
 }

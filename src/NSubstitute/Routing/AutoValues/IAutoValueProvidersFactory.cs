@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-using NSubstitute.Core;
+﻿using NSubstitute.Core;
 
-namespace NSubstitute.Routing.AutoValues
+namespace NSubstitute.Routing.AutoValues;
+
+public interface IAutoValueProvidersFactory
 {
-    public interface IAutoValueProvidersFactory
-    {
-        IReadOnlyCollection<IAutoValueProvider> CreateProviders(ISubstituteFactory substituteFactory);
-    }
+    IReadOnlyCollection<IAutoValueProvider> CreateProviders(ISubstituteFactory substituteFactory);
 }

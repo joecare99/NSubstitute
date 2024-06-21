@@ -1,6 +1,6 @@
 NSubstitute
 ========
-[![Build status](https://ci.appveyor.com/api/projects/status/ipe7ephhy6f9bbgp/branch/master?svg=true)](https://ci.appveyor.com/project/NSubstitute/nsubstitute/branch/master) [![Travis Build Status](https://travis-ci.com/nsubstitute/NSubstitute.svg?branch=master)](https://travis-ci.com/nsubstitute/NSubstitute)
+[![Build status](https://github.com/nsubstitute/NSubstitute/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/nsubstitute/NSubstitute/actions/workflows/build_and_test.yml)
 [![Nuget](https://img.shields.io/nuget/v/NSubstitute.svg)](https://www.nuget.org/packages/NSubstitute)
 
 Visit the [NSubstitute website](https://nsubstitute.github.io) for more information.
@@ -69,13 +69,14 @@ _calculator.DidNotReceive().Add(5, 7);
 
 If our Received() assertion fails, NSubstitute tries to give us some help as to what the problem might be:
 
-
-    NSubstitute.Exceptions.ReceivedCallsException : Expected to receive a call matching:
-        Add(1, 2)
-    Actually received no matching calls.
-    Received 2 non-matching calls (non-matching arguments indicated with '*' characters):
-        Add(1, *5*)
-        Add(*4*, *7*)
+```
+NSubstitute.Exceptions.ReceivedCallsException : Expected to receive a call matching:
+    Add(1, 2)
+Actually received no matching calls.
+Received 2 non-matching calls (non-matching arguments indicated with '*' characters):
+    Add(1, *5*)
+    Add(*4*, *7*)
+```
 
 We can also work with properties using the Returns syntax we use for methods, or just stick with plain old property setters (for read/write properties):
 
@@ -125,7 +126,7 @@ Assert.That(eventWasRaised);
 
 ### Building
 
-NSubstitute and its tests can be compiled and run using Visual Studio and Visual Studio for Mac. Note that some tests are marked `[Pending]` and are not meant to pass at present, so it is a good idea to exclude tests in the Pending category from test runs.
+NSubstitute and its tests can be compiled and run using Visual Studio, Visual Studio Code or any other editor with .NET support. Note that some tests are marked `[Pending]` and are not meant to pass at present, so it is a good idea to exclude tests in the Pending category from test runs.
 
 There are also build scripts in the `./build` directory for command line builds, and CI configurations in the project root.
 

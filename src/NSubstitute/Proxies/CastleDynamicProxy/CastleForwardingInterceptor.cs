@@ -1,45 +1,35 @@
-using System;
 using Castle.DynamicProxy;
 using NSubstitute.Core;
 
-namespace NSubstitute.Proxies.CastleDynamicProxy
+namespace NSubstitute.Proxies.CastleDynamicProxy;
+
+public class CastleForwardingInterceptor(CastleInvocationMapper invocationMapper, ICallRouter callRouter) : IInterceptor
 {
-    public class CastleForwardingInterceptor : IInterceptor
+    private bool _fullDispatchMode;
+
+    public void Intercept(IInvocation invocation)
     {
-        private readonly CastleInvocationMapper _invocationMapper;
-        private readonly ICallRouter _callRouter;
-        private bool _fullDispatchMode;
+        ICall mappedInvocation = invocationMapper.Map(invocation);
 
-        public CastleForwardingInterceptor(CastleInvocationMapper invocationMapper, ICallRouter callRouter)
+        if (_fullDispatchMode)
         {
-            _invocationMapper = invocationMapper;
-            _callRouter = callRouter;
+            invocation.ReturnValue = callRouter.Route(mappedInvocation);
+            return;
         }
 
-        public void Intercept(IInvocation invocation)
+        // Fallback to the base value until the full dispatch mode is activated.
+        // Useful to ensure that object is initialized properly.
+        if (callRouter.CallBaseByDefault)
         {
-            ICall mappedInvocation = _invocationMapper.Map(invocation);
-
-            if (_fullDispatchMode)
-            {
-                invocation.ReturnValue = _callRouter.Route(mappedInvocation);
-                return;
-            }
-
-            // Fallback to the base value until the full dispatch mode is activated.
-            // Useful to ensure that object is initialized properly.
-            if (_callRouter.CallBaseByDefault)
-            {
-                invocation.ReturnValue = mappedInvocation.TryCallBase().ValueOrDefault();
-            }
+            invocation.ReturnValue = mappedInvocation.TryCallBase().ValueOrDefault();
         }
+    }
 
-        /// <summary>
-        /// Switches interceptor to dispatch calls via the full pipeline.
-        /// </summary>
-        public void SwitchToFullDispatchMode()
-        {
-            _fullDispatchMode = true;
-        }
+    /// <summary>
+    /// Switches interceptor to dispatch calls via the full pipeline.
+    /// </summary>
+    public void SwitchToFullDispatchMode()
+    {
+        _fullDispatchMode = true;
     }
 }

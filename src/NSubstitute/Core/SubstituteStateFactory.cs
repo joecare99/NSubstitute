@@ -1,27 +1,14 @@
-﻿using System;
-using NSubstitute.Routing.AutoValues;
+﻿using NSubstitute.Routing.AutoValues;
 
-namespace NSubstitute.Core
+namespace NSubstitute.Core;
+
+public class SubstituteStateFactory(ICallSpecificationFactory callSpecificationFactory,
+    ICallInfoFactory callInfoFactory,
+    IAutoValueProvidersFactory autoValueProvidersFactory) : ISubstituteStateFactory
 {
-    public class SubstituteStateFactory : ISubstituteStateFactory
+    public ISubstituteState Create(ISubstituteFactory substituteFactory)
     {
-        private readonly ICallSpecificationFactory _callSpecificationFactory;
-        private readonly ICallInfoFactory _callInfoFactory;
-        private readonly IAutoValueProvidersFactory _autoValueProvidersFactory;
-
-        public SubstituteStateFactory(ICallSpecificationFactory callSpecificationFactory,
-            ICallInfoFactory callInfoFactory,
-            IAutoValueProvidersFactory autoValueProvidersFactory)
-        {
-            _callSpecificationFactory = callSpecificationFactory;
-            _callInfoFactory = callInfoFactory;
-            _autoValueProvidersFactory = autoValueProvidersFactory;
-        }
-
-        public ISubstituteState Create(ISubstituteFactory substituteFactory)
-        {
-            var autoValueProviders = _autoValueProvidersFactory.CreateProviders(substituteFactory);
-            return new SubstituteState(_callSpecificationFactory, _callInfoFactory, autoValueProviders);
-        }
+        var autoValueProviders = autoValueProvidersFactory.CreateProviders(substituteFactory);
+        return new SubstituteState(callSpecificationFactory, callInfoFactory, autoValueProviders);
     }
 }

@@ -1,31 +1,21 @@
-﻿using System;
+﻿namespace NSubstitute.Core;
 
-namespace NSubstitute.Core
+internal class ReturnObservable<T>(T? value) : IObservable<T?>
 {
-    internal class ReturnObservable<T> : IObservable<T?>
+    public ReturnObservable() : this(default) { }
+
+    public IDisposable Subscribe(IObserver<T?> observer)
     {
-        private readonly T? _value;
+        observer.OnNext(value);
+        observer.OnCompleted();
 
-        public ReturnObservable() : this(default) { }
-
-        public ReturnObservable(T? value)
-        {
-            _value = value;
-        }
-
-        public IDisposable Subscribe(IObserver<T?> observer)
-        {
-            observer.OnNext(_value);
-            observer.OnCompleted();
-
-            return EmptyDisposable.Instance;
-        }
+        return EmptyDisposable.Instance;
     }
+}
 
-    internal class EmptyDisposable : IDisposable
-    {
-        public static IDisposable Instance { get; } = new EmptyDisposable();
+internal class EmptyDisposable : IDisposable
+{
+    public static IDisposable Instance { get; } = new EmptyDisposable();
 
-        public void Dispose() { }
-    }
+    public void Dispose() { }
 }

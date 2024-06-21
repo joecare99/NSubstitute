@@ -1,61 +1,51 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using NSubstitute.Exceptions;
 using System.Reflection;
-using NSubstitute.Exceptions;
 
-namespace NSubstitute.Core.Arguments
+namespace NSubstitute.Core.Arguments;
+
+public class ArgumentSpecificationsFactory(
+    IArgumentSpecificationFactory argumentSpecificationFactory,
+    ISuppliedArgumentSpecificationsFactory suppliedArgumentSpecificationsFactory) : IArgumentSpecificationsFactory
 {
-    public class ArgumentSpecificationsFactory : IArgumentSpecificationsFactory
+    public IEnumerable<IArgumentSpecification> Create(IList<IArgumentSpecification> argumentSpecs, object?[] arguments, IParameterInfo[] parameterInfos, MethodInfo methodInfo, MatchArgs matchArgs)
     {
-        private readonly IArgumentSpecificationFactory _argumentSpecificationFactory;
-        private readonly ISuppliedArgumentSpecificationsFactory _suppliedArgumentSpecificationsFactory;
+        var suppliedArgumentSpecifications = suppliedArgumentSpecificationsFactory.Create(argumentSpecs);
 
-        public ArgumentSpecificationsFactory(IArgumentSpecificationFactory argumentSpecificationFactory, ISuppliedArgumentSpecificationsFactory suppliedArgumentSpecificationsFactory)
+        var result = new List<IArgumentSpecification>();
+        for (var i = 0; i < arguments.Length; i++)
         {
-            _argumentSpecificationFactory = argumentSpecificationFactory;
-            _suppliedArgumentSpecificationsFactory = suppliedArgumentSpecificationsFactory;
-        }
+            var arg = arguments[i];
+            var paramInfo = parameterInfos[i];
 
-        public IEnumerable<IArgumentSpecification> Create(IList<IArgumentSpecification> argumentSpecs, object?[] arguments, IParameterInfo[] parameterInfos, MethodInfo methodInfo, MatchArgs matchArgs)
-        {
-            var suppliedArgumentSpecifications = _suppliedArgumentSpecificationsFactory.Create(argumentSpecs);
-
-            var result = new List<IArgumentSpecification>();
-            for (var i = 0; i < arguments.Length; i++)
+            try
             {
-                var arg = arguments[i];
-                var paramInfo = parameterInfos[i];
-
-                try
-                {
-                    result.Add(_argumentSpecificationFactory.Create(arg, paramInfo, suppliedArgumentSpecifications));
-                }
-                catch (AmbiguousArgumentsException ex) when (ex.ContainsDefaultMessage)
-                {
-                    IEnumerable<IArgumentSpecification> alreadyResolvedSpecs = result;
-                    if (ex.Data[AmbiguousArgumentsException.NonReportedResolvedSpecificationsKey] is IEnumerable<IArgumentSpecification> additional)
-                    {
-                        alreadyResolvedSpecs = alreadyResolvedSpecs.Concat(additional);
-                    }
-
-                    throw new AmbiguousArgumentsException(methodInfo, arguments, alreadyResolvedSpecs, argumentSpecs);
-                }
+                result.Add(argumentSpecificationFactory.Create(arg, paramInfo, suppliedArgumentSpecifications));
             }
-
-            var remainingArgumentSpecifications = suppliedArgumentSpecifications.DequeueRemaining();
-            if (remainingArgumentSpecifications.Any())
+            catch (AmbiguousArgumentsException ex) when (ex.ContainsDefaultMessage)
             {
-                throw new RedundantArgumentMatcherException(remainingArgumentSpecifications, argumentSpecs);
+                IEnumerable<IArgumentSpecification> alreadyResolvedSpecs = result;
+                if (ex.Data[AmbiguousArgumentsException.NonReportedResolvedSpecificationsKey] is IEnumerable<IArgumentSpecification> additional)
+                {
+                    alreadyResolvedSpecs = alreadyResolvedSpecs.Concat(additional);
+                }
+
+                throw new AmbiguousArgumentsException(methodInfo, arguments, alreadyResolvedSpecs, argumentSpecs);
             }
-
-            return matchArgs == MatchArgs.Any
-                ? ConvertToMatchAnyValue(result)
-                : result;
         }
 
-        private static IEnumerable<IArgumentSpecification> ConvertToMatchAnyValue(IEnumerable<IArgumentSpecification> specs)
+        var remainingArgumentSpecifications = suppliedArgumentSpecifications.DequeueRemaining();
+        if (remainingArgumentSpecifications.Any())
         {
-            return specs.Select(x => x.CreateCopyMatchingAnyArgOfType(x.ForType)).ToArray();
+            throw new RedundantArgumentMatcherException(remainingArgumentSpecifications, argumentSpecs);
         }
+
+        return matchArgs == MatchArgs.Any
+            ? ConvertToMatchAnyValue(result)
+            : result;
+    }
+
+    private static IEnumerable<IArgumentSpecification> ConvertToMatchAnyValue(IEnumerable<IArgumentSpecification> specs)
+    {
+        return specs.Select(x => x.CreateCopyMatchingAnyArgOfType(x.ForType)).ToArray();
     }
 }

@@ -1,14 +1,11 @@
-﻿using System.Threading;
+﻿namespace NSubstitute.Core;
 
-namespace NSubstitute.Core
+public class SequenceNumberGenerator
 {
-    public class SequenceNumberGenerator
-    {
-        private long _current = long.MinValue;
+    private long _current = long.MinValue;
 
-        public virtual long Next()
-        {
-            return Interlocked.Increment(ref _current);
-        }
+    public virtual long Next()
+    {
+        return Interlocked.Increment(ref _current);
     }
 }

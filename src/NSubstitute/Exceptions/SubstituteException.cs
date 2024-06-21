@@ -1,11 +1,7 @@
-using System;
+namespace NSubstitute.Exceptions;
 
-namespace NSubstitute.Exceptions
+public class SubstituteException(string message, Exception? innerException) : Exception(message, innerException)
 {
-    public class SubstituteException : Exception
-    {
-        public SubstituteException() : this("") { }
-        public SubstituteException(string message) : this(message, null) { }
-        public SubstituteException(string message, Exception? innerException) : base(message, innerException) { }
-    }
+    public SubstituteException() : this("") { }
+    public SubstituteException(string message) : this(message, null) { }
 }

@@ -1,7 +1,5 @@
-namespace NSubstitute.Exceptions
+namespace NSubstitute.Exceptions;
+
+public class CallSequenceNotFoundException(string message) : SubstituteException(message)
 {
-    public class CallSequenceNotFoundException : SubstituteException
-    {
-        public CallSequenceNotFoundException(string message) : base(message) { }
-    }
 }

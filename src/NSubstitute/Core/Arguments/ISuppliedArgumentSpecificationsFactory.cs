@@ -1,9 +1,6 @@
-using System.Collections.Generic;
+namespace NSubstitute.Core.Arguments;
 
-namespace NSubstitute.Core.Arguments
+public interface ISuppliedArgumentSpecificationsFactory
 {
-    public interface ISuppliedArgumentSpecificationsFactory
-    {
-        ISuppliedArgumentSpecifications Create(IEnumerable<IArgumentSpecification> argumentSpecifications);
-    }
+    ISuppliedArgumentSpecifications Create(IEnumerable<IArgumentSpecification> argumentSpecifications);
 }

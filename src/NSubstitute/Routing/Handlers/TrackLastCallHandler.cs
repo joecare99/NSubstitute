@@ -1,21 +1,13 @@
 ﻿using NSubstitute.Core;
 
-namespace NSubstitute.Routing.Handlers
+namespace NSubstitute.Routing.Handlers;
+
+public class TrackLastCallHandler(IPendingSpecification pendingSpecification) : ICallHandler
 {
-    public class TrackLastCallHandler : ICallHandler
+    public RouteAction Handle(ICall call)
     {
-        private readonly IPendingSpecification _pendingSpecification;
+        pendingSpecification.SetLastCall(call);
 
-        public TrackLastCallHandler(IPendingSpecification pendingSpecification)
-        {
-            _pendingSpecification = pendingSpecification;
-        }
-
-        public RouteAction Handle(ICall call)
-        {
-            _pendingSpecification.SetLastCall(call);
-
-            return RouteAction.Continue();
-        }
+        return RouteAction.Continue();
     }
 }

@@ -1,21 +1,13 @@
 ﻿using NSubstitute.Core;
 
-namespace NSubstitute.Routing.Handlers
+namespace NSubstitute.Routing.Handlers;
+
+public class AddCallToQueryResultHandler(IThreadLocalContext threadContext) : ICallHandler
 {
-    public class AddCallToQueryResultHandler : ICallHandler
+    public RouteAction Handle(ICall call)
     {
-        private readonly IThreadLocalContext _threadContext;
+        threadContext.RegisterInContextQuery(call);
 
-        public AddCallToQueryResultHandler(IThreadLocalContext threadContext)
-        {
-            _threadContext = threadContext;
-        }
-
-        public RouteAction Handle(ICall call)
-        {
-            _threadContext.RegisterInContextQuery(call);
-
-            return RouteAction.Continue();
-        }
+        return RouteAction.Continue();
     }
 }

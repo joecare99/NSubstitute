@@ -47,9 +47,9 @@ Your substitute can implement several types this way, but remember you can only 
 
 ```csharp
 var substitute = Substitute.For(
-		new[] { typeof(ICommand), typeof(ISomeInterface), typeof(SomeClassWithCtorArgs) },
-		new object[] { 5, "hello world" }
-	);
+    new[] { typeof(ICommand), typeof(ISomeInterface), typeof(SomeClassWithCtorArgs) },
+    new object[] { 5, "hello world" }
+);
 Assert.IsInstanceOf<ICommand>(substitute);
 Assert.IsInstanceOf<ISomeInterface>(substitute);
 Assert.IsInstanceOf<SomeClassWithCtorArgs>(substitute);
@@ -60,27 +60,27 @@ Assert.IsInstanceOf<SomeClassWithCtorArgs>(substitute);
 public interface ISomeInterface { }
 public abstract class SomeClassWithCtorArgs
 {
-	protected SomeClassWithCtorArgs(int anInt, string aString) { }
+    protected SomeClassWithCtorArgs(int anInt, string aString) { }
 }
 
 public interface ICommand
 {
-	void Execute();
+    void Execute();
 }
 
 public class CommandRunner
 {
-	private readonly ICommand _command;
-	public CommandRunner(ICommand command)
-	{
-		_command = command;
-	}
+    private readonly ICommand _command;
+    public CommandRunner(ICommand command)
+    {
+        _command = command;
+    }
 
-	public void RunCommand()
-	{
-		_command.Execute();
-		if (_command is IDisposable) ((IDisposable)_command).Dispose();
-	}
+    public void RunCommand()
+    {
+        _command.Execute();
+        if (_command is IDisposable) ((IDisposable)_command).Dispose();
+    }
 }
 ```
 -->
@@ -99,6 +99,3 @@ Assert.AreEqual("hello", func());
 ## Partial substitutes and test spies
 
 When required we can also create substitutes that run real code by default, letting us replace [specific parts of a class with substitute behaviour](/help/partial-subs/).
-
-
-

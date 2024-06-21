@@ -1,14 +1,7 @@
-namespace NSubstitute.Core
-{
-    public class CallSpecAndTarget
-    {
-        public ICallSpecification CallSpecification { get; }
-        public object Target { get; }
+namespace NSubstitute.Core;
 
-        public CallSpecAndTarget(ICallSpecification callSpecification, object target)
-        {
-            CallSpecification = callSpecification;
-            Target = target;
-        }
-    }
+public class CallSpecAndTarget(ICallSpecification callSpecification, object target)
+{
+    public ICallSpecification CallSpecification { get; } = callSpecification;
+    public object Target { get; } = target;
 }

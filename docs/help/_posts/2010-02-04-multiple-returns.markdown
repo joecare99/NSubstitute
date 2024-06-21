@@ -6,8 +6,8 @@ layout: post
 <!--
 ```requiredcode
 public interface ICalculator {
-	int Add(int a, int b);
-	string Mode { get; set; }
+    int Add(int a, int b);
+    string Mode { get; set; }
 }
 ICalculator calculator;
 [SetUp] public void SetUp() { calculator = Substitute.For<ICalculator>(); }
@@ -39,4 +39,3 @@ Assert.Throws<Exception>(() => { var result = calculator.Mode; });
 ## Configuring other calls without using up multiple returns
 
 If a call has been configured with multiple returns values, you can configure a more specific call without using up any of these callbacks using [`.Configure()`](/help/configure/).
-

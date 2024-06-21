@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 
-namespace NSubstitute.Core
+namespace NSubstitute.Core;
+
+public interface IMethodInfoFormatter
 {
-    public interface IMethodInfoFormatter
-    {
-        bool CanFormat(MethodInfo methodInfo);
-        string Format(MethodInfo methodInfo, IEnumerable<string> formattedArguments);
-    }
+    bool CanFormat(MethodInfo methodInfo);
+    string Format(MethodInfo methodInfo, IEnumerable<string> formattedArguments);
 }

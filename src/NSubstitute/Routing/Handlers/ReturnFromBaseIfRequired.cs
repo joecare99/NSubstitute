@@ -1,27 +1,18 @@
-﻿using System;
-using NSubstitute.Core;
+﻿using NSubstitute.Core;
 
-namespace NSubstitute.Routing.Handlers
+namespace NSubstitute.Routing.Handlers;
+
+public class ReturnFromBaseIfRequired(ICallBaseConfiguration config) : ICallHandler
 {
-    public class ReturnFromBaseIfRequired : ICallHandler
+    public RouteAction Handle(ICall call)
     {
-        private readonly ICallBaseConfiguration _config;
-
-        public ReturnFromBaseIfRequired(ICallBaseConfiguration config)
+        if (config.ShouldCallBase(call))
         {
-            _config = config;
+            return call
+                .TryCallBase()
+                .Fold(RouteAction.Continue, RouteAction.Return);
         }
 
-        public RouteAction Handle(ICall call)
-        {
-            if (_config.ShouldCallBase(call))
-            {
-                return call
-                    .TryCallBase()
-                    .Fold(RouteAction.Continue, RouteAction.Return);
-            }
-
-            return RouteAction.Continue();
-        }
+        return RouteAction.Continue();
     }
 }

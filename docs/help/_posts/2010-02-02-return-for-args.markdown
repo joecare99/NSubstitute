@@ -6,8 +6,8 @@ layout: post
 <!--
 ```requiredcode
 public interface ICalculator {
-	int Add(int a, int b);
-	string Mode { get; set; }
+    int Add(int a, int b);
+    string Mode { get; set; }
 }
 ICalculator calculator;
 [SetUp] public void SetUp() { calculator = Substitute.For<ICalculator>(); }
@@ -32,4 +32,3 @@ Assert.AreNotEqual(345, calculator.Add(1, 2));
 calculator.Add(Arg.Is(0), Arg.Is(0)).Returns(99);
 Assert.AreEqual(99, calculator.Add(0, 0));
 ```
-

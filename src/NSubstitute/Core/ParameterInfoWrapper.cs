@@ -1,23 +1,14 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 
-namespace NSubstitute.Core
+namespace NSubstitute.Core;
+
+internal class ParameterInfoWrapper(ParameterInfo parameterInfo) : IParameterInfo
 {
-    internal class ParameterInfoWrapper : IParameterInfo
-    {
-        private readonly ParameterInfo _parameterInfo;
+    public Type ParameterType => parameterInfo.ParameterType;
 
-        public ParameterInfoWrapper(ParameterInfo parameterInfo)
-        {
-            _parameterInfo = parameterInfo;
-        }
+    public bool IsParams => parameterInfo.IsParams();
 
-        public Type ParameterType => _parameterInfo.ParameterType;
+    public bool IsOptional => parameterInfo.IsOptional;
 
-        public bool IsParams => _parameterInfo.IsParams();
-
-        public bool IsOptional => _parameterInfo.IsOptional;
-
-        public bool IsOut => _parameterInfo.IsOut;
-    }
+    public bool IsOut => parameterInfo.IsOut;
 }

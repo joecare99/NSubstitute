@@ -1,42 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿namespace NSubstitute.Core;
 
-namespace NSubstitute.Core
+public class Query(ICallSpecificationFactory callSpecificationFactory) : IQuery, IQueryResults
 {
-    public class Query : IQuery, IQueryResults
+    private readonly List<CallSpecAndTarget> _querySpec = [];
+    private readonly HashSet<ICall> _matchingCalls = new(new CallSequenceNumberComparer());
+
+    public void RegisterCall(ICall call)
     {
-        private readonly List<CallSpecAndTarget> _querySpec = new();
-        private readonly HashSet<ICall> _matchingCalls = new(new CallSequenceNumberComparer());
-        private readonly ICallSpecificationFactory _callSpecificationFactory;
+        var target = call.Target();
+        var callSpecification = callSpecificationFactory.CreateFrom(call, MatchArgs.AsSpecifiedInCall);
 
-        public Query(ICallSpecificationFactory callSpecificationFactory)
-        {
-            _callSpecificationFactory = callSpecificationFactory;
-        }
+        _querySpec.Add(new CallSpecAndTarget(callSpecification, target));
 
-        public void RegisterCall(ICall call)
-        {
-            var target = call.Target();
-            var callSpecification = _callSpecificationFactory.CreateFrom(call, MatchArgs.AsSpecifiedInCall);
+        var allMatchingCallsOnTarget = target.ReceivedCalls().Where(callSpecification.IsSatisfiedBy);
+        _matchingCalls.UnionWith(allMatchingCallsOnTarget);
+    }
 
-            _querySpec.Add(new CallSpecAndTarget(callSpecification, target));
+    public IQueryResults Result() => this;
 
-            var allMatchingCallsOnTarget = target.ReceivedCalls().Where(callSpecification.IsSatisfiedBy);
-            _matchingCalls.UnionWith(allMatchingCallsOnTarget);
-        }
+    IEnumerable<ICall> IQueryResults.MatchingCallsInOrder() => _matchingCalls.OrderBy(x => x.GetSequenceNumber());
 
-        public IQueryResults Result() => this;
+    IEnumerable<CallSpecAndTarget> IQueryResults.QuerySpecification() => _querySpec.Select(x => x);
 
-        IEnumerable<ICall> IQueryResults.MatchingCallsInOrder() => _matchingCalls.OrderBy(x => x.GetSequenceNumber());
+    private class CallSequenceNumberComparer : IEqualityComparer<ICall>
+    {
+        public bool Equals(ICall? x, ICall? y) => x?.GetSequenceNumber() == y?.GetSequenceNumber();
 
-        IEnumerable<CallSpecAndTarget> IQueryResults.QuerySpecification() => _querySpec.Select(x => x);
-
-        private class CallSequenceNumberComparer : IEqualityComparer<ICall>
-        {
-            public bool Equals(ICall? x, ICall? y) => x?.GetSequenceNumber() == y?.GetSequenceNumber();
-
-            public int GetHashCode(ICall obj) => obj.GetSequenceNumber().GetHashCode();
-        }
+        public int GetHashCode(ICall obj) => obj.GetSequenceNumber().GetHashCode();
     }
 }

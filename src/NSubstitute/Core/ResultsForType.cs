@@ -1,65 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 using NSubstitute.Core.Arguments;
 
-namespace NSubstitute.Core
+namespace NSubstitute.Core;
+
+public class ResultsForType(ICallInfoFactory callInfoFactory) : IResultsForType
 {
-    public class ResultsForType : IResultsForType
+    private readonly CallResults _results = new CallResults(callInfoFactory);
+
+    public void SetResult(Type type, IReturn resultToReturn)
     {
-        private readonly CallResults _results;
+        _results.SetResult(new MatchingReturnTypeSpecification(type), resultToReturn);
+    }
 
-        public ResultsForType(ICallInfoFactory callInfoFactory)
-        {
-            _results = new CallResults(callInfoFactory);
-        }
+    public bool TryGetResult(ICall call, out object? result)
+    {
+        return _results.TryGetResult(call, out result);
+    }
 
-        public void SetResult(Type type, IReturn resultToReturn)
-        {
-            _results.SetResult(new MatchingReturnTypeSpecification(type), resultToReturn);
-        }
+    public void Clear()
+    {
+        _results.Clear();
+    }
 
-        public bool TryGetResult(ICall call, out object? result)
-        {
-            return _results.TryGetResult(call, out result);
-        }
+    private class MatchingReturnTypeSpecification(Type expectedReturnType) : ICallSpecification
+    {
+        public bool IsSatisfiedBy(ICall call)
+            => call.GetReturnType() == expectedReturnType;
 
-        public void Clear()
-        {
-            _results.Clear();
-        }
+        // ******* Rest methods are not required *******
 
-        private class MatchingReturnTypeSpecification : ICallSpecification
-        {
-            private readonly Type _expectedReturnType;
+        public string Format(ICall call)
+            => throw new NotSupportedException();
 
-            public MatchingReturnTypeSpecification(Type expectedReturnType)
-            {
-                _expectedReturnType = expectedReturnType;
-            }
+        public ICallSpecification CreateCopyThatMatchesAnyArguments()
+            => throw new NotSupportedException();
 
-            public bool IsSatisfiedBy(ICall call)
-                => call.GetReturnType() == _expectedReturnType;
-            
-            // ******* Rest methods are not required *******
+        public void InvokePerArgumentActions(CallInfo callInfo)
+            => throw new NotSupportedException();
 
-            public string Format(ICall call)
-                => throw new NotSupportedException();
+        public IEnumerable<ArgumentMatchInfo> NonMatchingArguments(ICall call)
+            => throw new NotSupportedException();
 
-            public ICallSpecification CreateCopyThatMatchesAnyArguments()
-                => throw new NotSupportedException();
+        public MethodInfo GetMethodInfo()
+            => throw new NotSupportedException();
 
-            public void InvokePerArgumentActions(CallInfo callInfo)
-                => throw new NotSupportedException();
-
-            public IEnumerable<ArgumentMatchInfo> NonMatchingArguments(ICall call)
-                => throw new NotSupportedException();
-
-            public MethodInfo GetMethodInfo()
-                => throw new NotSupportedException();
-
-            public Type ReturnType()
-                => throw new NotSupportedException();
-        }
+        public Type ReturnType()
+            => throw new NotSupportedException();
     }
 }

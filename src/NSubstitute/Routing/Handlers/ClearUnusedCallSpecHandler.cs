@@ -1,21 +1,13 @@
 ﻿using NSubstitute.Core;
 
-namespace NSubstitute.Routing.Handlers
+namespace NSubstitute.Routing.Handlers;
+
+public class ClearUnusedCallSpecHandler(IPendingSpecification pendingSpecification) : ICallHandler
 {
-    public class ClearUnusedCallSpecHandler : ICallHandler
+    public RouteAction Handle(ICall call)
     {
-        private readonly IPendingSpecification _pendingSpecification;
+        pendingSpecification.Clear();
 
-        public ClearUnusedCallSpecHandler(IPendingSpecification pendingSpecification)
-        {
-            _pendingSpecification = pendingSpecification;
-        }
-
-        public RouteAction Handle(ICall call)
-        {
-            _pendingSpecification.Clear();
-
-            return RouteAction.Continue();
-        }
+        return RouteAction.Continue();
     }
 }

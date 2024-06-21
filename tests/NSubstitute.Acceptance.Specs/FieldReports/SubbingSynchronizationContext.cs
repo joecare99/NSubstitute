@@ -1,14 +1,12 @@
-using System.Threading;
 using NUnit.Framework;
 
-namespace NSubstitute.Acceptance.Specs.FieldReports
+namespace NSubstitute.Acceptance.Specs.FieldReports;
+
+public class SubbingSynchronizationContext
 {
-    public class SubbingSynchronizationContext
+    [Test]
+    public void Create_substitute_for_synchronization_context()
     {
-        [Test]
-        public void Create_substitute_for_synchronization_context()
-        {
-            Substitute.For<SynchronizationContext>();
-        }
+        Substitute.For<SynchronizationContext>();
     }
 }
