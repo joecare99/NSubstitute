@@ -26,7 +26,7 @@ public class RaiseEventHandler(IEventHandlerRegistry eventHandlerRegistry, Func<
 
             try
             {
-                handler.DynamicInvoke(eventArguments);
+                (handler.DynamicInvoke(eventArguments) as Task)?.GetAwaiter().GetResult();
             }
             catch (TargetInvocationException e)
             {

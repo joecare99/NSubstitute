@@ -19,7 +19,7 @@ public class ThreadLocalContext : IThreadLocalContext
     public ThreadLocalContext()
     {
         _lastCallRouter = new RobustThreadLocal<ICallRouter?>();
-        _argumentSpecifications = new RobustThreadLocal<IList<IArgumentSpecification>>(() => new List<IArgumentSpecification>());
+        _argumentSpecifications = new RobustThreadLocal<IList<IArgumentSpecification>>(() => []);
         _getArgumentsForRaisingEvent = new RobustThreadLocal<Func<ICall, object?[]>?>();
         _currentQuery = new RobustThreadLocal<IQuery?>();
         _pendingSpecificationInfo = new RobustThreadLocal<PendingSpecInfoData>();
@@ -102,10 +102,27 @@ public class ThreadLocalContext : IThreadLocalContext
         }
         else
         {
-            _argumentSpecifications.Value = new List<IArgumentSpecification>();
+            _argumentSpecifications.Value = [];
         }
 
         return queue;
+    }
+
+    /// <inheritdoc/>
+    public IList<IArgumentSpecification> PeekAllArgumentSpecifications()
+    {
+        var queue = _argumentSpecifications.Value;
+
+        if (queue?.Count > 0)
+        {
+            var items = new IArgumentSpecification[queue.Count];
+
+            queue.CopyTo(items, 0);
+
+            return items;
+        }
+
+        return EmptySpecifications;
     }
 
     public void SetPendingRaisingEventArgumentsFactory(Func<ICall, object?[]> getArguments)

@@ -32,6 +32,30 @@ public class SubbingForConcreteTypesAndMultipleInterfaces
     }
 
     [Test]
+    public void Can_sub_for_abstract_type_and_implement_other_two_interfaces()
+    {
+        // test from docs
+        var substitute = Substitute.For([typeof(IFirst), typeof(ISecond), typeof(ClassWithCtorArgs)],
+            ["hello world", 5]);
+
+        Assert.That(substitute, Is.InstanceOf<IFirst>());
+        Assert.That(substitute, Is.InstanceOf<ISecond>());
+        Assert.That(substitute, Is.InstanceOf<ClassWithCtorArgs>());
+    }
+
+    [Test]
+    public void Can_sub_for_concrete_type_and_implement_other_two_interfaces()
+    {
+        // test from docs
+        var substitute = Substitute.For([typeof(IFirst), typeof(ISecond), typeof(ConcreteClassWithCtorArgs)],
+            ["hello world", 5]);
+
+        Assert.That(substitute, Is.InstanceOf<IFirst>());
+        Assert.That(substitute, Is.InstanceOf<ISecond>());
+        Assert.That(substitute, Is.InstanceOf<ConcreteClassWithCtorArgs>());
+    }
+
+    [Test]
     public void Partial_sub()
     {
         var sub = Substitute.For<Partial>();
@@ -90,8 +114,13 @@ public class SubbingForConcreteTypesAndMultipleInterfaces
         public virtual int Number() { return -1; }
         public int GetNumberPlusOne() { return Number() + 1; }
     }
+
     public abstract class ClassWithCtorArgs(string s, int a)
     {
         public string StringFromCtorArg { get; set; } = s; public int IntFromCtorArg { get; set; } = a;
+    }
+
+    public class ConcreteClassWithCtorArgs(string s, int a) : ClassWithCtorArgs(s, a)
+    {
     }
 }

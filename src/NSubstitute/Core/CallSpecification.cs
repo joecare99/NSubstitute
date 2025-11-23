@@ -67,6 +67,15 @@ public class CallSpecification(MethodInfo methodInfo, IEnumerable<IArgumentSpeci
             var first = aArgs[i];
             var second = bArgs[i];
 
+            // Get the element types for ref and out parameters, important for matching calls when Arg.AnyType
+            // is used in combination with ref or out parameters.
+            if (first.HasElementType && !first.IsArray
+                && second.HasElementType && !second.IsArray)
+            {
+                first = first.GetElementType()!;
+                second = second.GetElementType()!;
+            }
+
             if (first.IsGenericType && second.IsGenericType
                 && first.GetGenericTypeDefinition() == second.GetGenericTypeDefinition())
             {
@@ -93,7 +102,7 @@ public class CallSpecification(MethodInfo methodInfo, IEnumerable<IArgumentSpeci
     private static bool AreEquivalentDefinitions(MethodInfo a, MethodInfo b)
     {
         return a.IsGenericMethod == b.IsGenericMethod
-               && a.ReturnType == b.ReturnType
+               && TypesAreAllEquivalent([a.ReturnType], [b.ReturnType])
                && a.Name.Equals(b.Name, StringComparison.Ordinal);
     }
 
@@ -121,7 +130,11 @@ public class CallSpecification(MethodInfo methodInfo, IEnumerable<IArgumentSpeci
 
     public override string ToString()
     {
-        var argSpecsAsStrings = _argumentSpecifications.Select(x => x.ToString() ?? string.Empty).ToArray();
+        var argSpecsAsStrings = Array.ConvertAll(_argumentSpecifications, x =>
+            x is IDescribeSpecification describe
+                ? describe.DescribeSpecification() ?? string.Empty
+                : x.ToString() ?? string.Empty
+        );
         return CallFormatter.Default.Format(GetMethodInfo(), argSpecsAsStrings);
     }
 

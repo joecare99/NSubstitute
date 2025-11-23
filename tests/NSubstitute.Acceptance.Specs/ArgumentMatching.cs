@@ -2,6 +2,7 @@
 using NSubstitute.Core;
 using NSubstitute.Core.Arguments;
 using NSubstitute.Exceptions;
+using NSubstitute.Extensions;
 using NUnit.Framework;
 
 namespace NSubstitute.Acceptance.Specs;
@@ -785,6 +786,24 @@ public class ArgumentMatching
     }
 
     [Test]
+    public void Supports_matching_custom_with_multiple_generic_arguments_string()
+    {
+        var service = Substitute.For<IMyService>();
+        var argument = new MyStringIntArgument();
+
+        service.MyMethodWithReturnValue<string>().Returns(argument);
+    }
+
+    [Test]
+    public void Supports_matching_custom_with_multiple_generic_arguments_int()
+    {
+        var service = Substitute.For<IMyService>();
+        var argument = new MyStringIntArgument();
+
+        service.MyMethodWithReturnValue<int>().Returns(argument);
+    }
+
+    [Test]
     public void Supports_matching_generic_interface_bound_type_ArgAnyType_with_class_argument()
     {
         var service = Substitute.For<IMyService>();
@@ -828,6 +847,25 @@ public class ArgumentMatching
         service.DidNotReceive().MyMethod(Arg.Any<MySampleClassArgument>());
     }
 
+    [Test]
+    public void Does_support_out_method_with_base_override()
+    {
+        var controlFactory = Substitute.For<MyHasMethodWithOutParameter>();
+
+        Assert.That(() => controlFactory.Configure()
+            .MethodWithOutParameter(default, out var _)
+            .ReturnsForAnyArgs(ci =>
+            {
+                ci[1] = 4;
+                return 3;
+            }), Throws.Nothing);
+
+        var returned = controlFactory.MethodWithOutParameter(0, out var outArg);
+        using var _ = Assert.EnterMultipleScope();
+        Assert.That(returned, Is.EqualTo(3));
+        Assert.That(outArg, Is.EqualTo(4));
+    }
+
     [SetUp]
     public void SetUp()
     {
@@ -837,12 +875,85 @@ public class ArgumentMatching
     public interface IMyService
     {
         void MyMethod<T>(IMyArgument<T> argument);
+
+        IMyArgument<T> MyMethodWithReturnValue<T>();
+
     }
+
     public interface IMyArgument<T> { }
     public class SampleClass { }
     public class MyStringArgument : IMyArgument<string> { }
     public class MyOtherStringArgument : IMyArgument<string> { }
     public class MySampleClassArgument : IMyArgument<SampleClass> { }
     public class MyOtherSampleClassArgument : IMyArgument<SampleClass> { }
+    public class MyStringIntArgument : IMyArgument<string>, IMyArgument<int> { }
     public class MySampleDerivedClassArgument : MySampleClassArgument { }
+
+    [Test]
+    public void Should_use_ToString_to_describe_custom_arg_matcher_without_DescribesSpec()
+    {
+        var ex = Assert.Throws<ReceivedCallsException>(() =>
+        {
+            _something.Received().Add(23, ArgumentMatcher.Enqueue(new CustomMatcher()));
+        });
+        Assert.That(ex.Message, Contains.Substring("Add(23, Custom match)"));
+    }
+
+    [Test]
+    public void Should_describe_spec_for_custom_arg_matcher_when_implemented()
+    {
+        var ex = Assert.Throws<ReceivedCallsException>(() =>
+        {
+            _something.Received().Add(23, ArgumentMatcher.Enqueue(new CustomDescribeSpecMatcher("DescribeSpec")));
+        });
+        Assert.That(ex.Message, Contains.Substring("Add(23, DescribeSpec)"));
+    }
+
+    [Test]
+    public void Should_use_empty_string_for_null_describe_spec_for_custom_arg_matcher_when_implemented()
+    {
+        var ex = Assert.Throws<ReceivedCallsException>(() =>
+        {
+            _something.Received().Add(23, ArgumentMatcher.Enqueue(new CustomDescribeSpecMatcher(null)));
+        });
+        Assert.That(ex.Message, Contains.Substring("Add(23, )"));
+    }
+
+    class CustomMatcher : IArgumentMatcher, IDescribeNonMatches, IArgumentMatcher<int>
+    {
+        public string DescribeFor(object argument) => "failed";
+        public bool IsSatisfiedBy(object argument) => false;
+        public bool IsSatisfiedBy(int argument) => false;
+        public override string ToString() => "Custom match";
+    }
+
+    class CustomDescribeSpecMatcher(string description) : CustomMatcher, IDescribeSpecification
+    {
+        public string DescribeSpecification() => description;
+    }
+
+    public interface IHasMethodWithOutParameter
+    {
+        int MethodWithOutParameter(int arg1, out int arg2);
+    }
+
+    public class HasMethodWithOutParameter : IHasMethodWithOutParameter
+    {
+        public virtual int MethodWithOutParameter(int arg1, out int arg2)
+        {
+            arg2 = 2;
+            return 1;
+        }
+    }
+
+    public class MyHasMethodWithOutParameter : HasMethodWithOutParameter
+    {
+        // The presence of his override used to throw an exception in NSubstitute 5.0.0, caused by a bug in Caste.Core < 5.2.0
+        // https://github.com/nsubstitute/NSubstitute/issues/716
+        public override int MethodWithOutParameter(int arg1, out int arg2)
+        {
+            arg2 = 3;
+            return 2;
+        }
+    }
 }

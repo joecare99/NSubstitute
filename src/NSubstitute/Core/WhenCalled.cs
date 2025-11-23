@@ -1,8 +1,5 @@
 using NSubstitute.Routing;
 
-// Disable nullability for entry-point API
-#nullable disable annotations
-
 namespace NSubstitute.Core;
 
 public class WhenCalled<T>(ISubstitutionContext context, T substitute, Action<T> call, MatchArgs matchArgs)
@@ -19,6 +16,15 @@ public class WhenCalled<T>(ISubstitutionContext context, T substitute, Action<T>
     {
         _threadContext.SetNextRoute(_callRouter, x => _routeFactory.DoWhenCalled(x, callbackWithArguments, matchArgs));
         call(substitute);
+    }
+
+    /// <summary>
+    /// Perform this action when called.
+    /// </summary>
+    /// <param name="callbackWithArguments"></param>
+    public void Do(Func<CallInfo, Task> callbackWithArguments)
+    {
+        Do(callInfo => callbackWithArguments(callInfo).GetAwaiter().GetResult());
     }
 
     /// <summary>
